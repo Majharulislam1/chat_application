@@ -7,7 +7,8 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import Join from './Components/Join.jsx'
-import Chat from './Components/Chat.jsx'
+import Chat from './Components/Chat.jsx';
+ 
 
 const router = createBrowserRouter([
   {
