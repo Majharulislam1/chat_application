@@ -11,10 +11,10 @@ import Chat from './Components/Chat.jsx';
  
 
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Join></Join>,
-  },
+  // {
+  //   path: "/",
+  //   element: <Join></Join>,
+  // },
   {
     path:'/chat',
     element:<Chat></Chat>

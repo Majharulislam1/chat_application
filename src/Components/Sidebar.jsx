@@ -1,56 +1,65 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-const Sidebar = ({ conversations, onSelectConversation, selectedConversation }) => {
-  const [search, setSearch] = useState('');
-  const filteredConversations = conversations.filter((conv) =>
-    conv.name.toLowerCase().includes(search.toLowerCase())
-  );
+function Sidebar({ conversations, onSelectUser, selectedUser }) {
+  console.log('Sidebar received conversations:', conversations);
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    if (diffInDays === 0) return 'Today';
+    if (diffInDays === 1) return 'Yesterday';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
-      {/* Search Bar */}
-      <div className="p-3 sm:p-4">
+    <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+      <div className="p-4">
         <input
           type="text"
-          placeholder="Search conversations"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full p-2 border rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-          aria-label="Search conversations"
+          placeholder="Search"
+          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
         />
       </div>
-
-      {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
-        {filteredConversations.length > 0 ? (
-          filteredConversations.map((conv) => (
+        {conversations.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">No conversations yet. Start chatting!</p>
+          </div>
+        ) : (
+          conversations.map((convo) => (
             <div
-              key={conv.name}
-              onClick={() => onSelectConversation(conv.name)}
-              role="button"
-              aria-selected={selectedConversation === conv.name}
-              className={`p-3 sm:p-4 flex items-center border-b border-gray-200 cursor-pointer ${
-                selectedConversation === conv.name ? 'bg-gray-100' : ''
-              } hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500`}
+              key={convo.user}
+              onClick={() => onSelectUser(convo.user)}
+              className={`flex items-center p-4 cursor-pointer hover:bg-gray-100 ${
+                selectedUser === convo.user ? 'bg-gray-100' : ''
+              }`}
             >
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-300 rounded-full mr-2 sm:mr-3"></div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-semibold text-gray-800 truncate">{conv.name}</h3>
-                  <span className="text-xs text-gray-500">
-                    {conv.timestamp ? new Date(conv.timestamp).toLocaleTimeString() : ''}
+              <div className="relative">
+                <img
+                  src={`https://via.placeholder.com/40?text=${convo.user[0]}`}
+                  alt={convo.user}
+                  className="w-10 h-10 rounded-full"
+                />
+                {convo.user === 'Eva Johnston' && (
+                  <span className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 border-2 border-white rounded-full flex items-center justify-center text-xs text-white">
+                    ...
                   </span>
+                )}
+              </div>
+              <div className="ml-3 flex-1">
+                <div className="flex justify-between">
+                  <h3 className="text-sm font-semibold">{convo.user}</h3>
+                  <span className="text-xs text-gray-500">{formatTimestamp(convo.timestamp)}</span>
                 </div>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">{conv.lastMessage || ''}</p>
+                <p className="text-sm text-gray-600 truncate">{convo.lastMessage}</p>
               </div>
             </div>
           ))
-        ) : (
-          <p className="p-3 sm:p-4 text-gray-500 text-sm">No conversations found</p>
         )}
       </div>
     </div>
   );
-};
+}
 
 export default Sidebar;

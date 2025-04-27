@@ -1,139 +1,138 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const ChatWindow = ({ messages, users, username, room, sendMessage }) => {
+function ChatWindow({ messages, username, selectedUser, onSendMessage }) {
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (e) => {
+  const handleSend = (e) => {
     e.preventDefault();
     if (message.trim()) {
-      sendMessage(message);
+      onSendMessage(message);
       setMessage('');
     }
   };
 
-  const getMessageDateLabel = (timestamp) => {
-    const messageDate = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-
-    if (
-      messageDate.getDate() === today.getDate() &&
-      messageDate.getMonth() === today.getMonth() &&
-      messageDate.getFullYear() === today.getFullYear()
-    ) {
-      return 'TODAY';
-    } else if (
-      messageDate.getDate() === yesterday.getDate() &&
-      messageDate.getMonth() === yesterday.getMonth() &&
-      messageDate.getFullYear() === yesterday.getFullYear()
-    ) {
-      return 'YESTERDAY';
-    } else {
-      return messageDate.toLocaleDateString('en-US', { weekday: 'long' });
-    }
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    if (diffInDays === 0) return 'Today';
+    if (diffInDays === 1) return 'Yesterday';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const messagesWithSeparators = [];
+  const formatMessageTime = (timestamp) => {
+    return new Date(timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  };
+
+  if (!selectedUser) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-gray-100">
+        <p className="text-gray-500">Select a conversation to start chatting</p>
+        <p className="text-gray-400 text-sm mt-2">Activate Windows<br />Go to Settings to activate Windows.</p>
+      </div>
+    );
+  }
+
   let lastDate = null;
 
-  messages.forEach((msg, index) => {
-    const messageDate = new Date(msg.timestamp);
-    const dateLabel = getMessageDateLabel(msg.timestamp);
-
-    if (lastDate !== dateLabel) {
-      messagesWithSeparators.push({ type: 'separator', label: dateLabel });
-      lastDate = dateLabel;
-    }
-    messagesWithSeparators.push({ type: 'message', msg, index });
-  });
-
   return (
-    <div className="flex-1 flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="p-3 sm:p-4 border-b border-gray-200 bg-white flex justify-between items-center">
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-gray-800 truncate">{room}</h2>
-          <p className="text-xs sm:text-sm text-gray-500">
-            {users.length} {users.length === 1 ? 'user' : 'users'} online
-          </p>
+    <div className="flex-1 flex flex-col bg-gray-100">
+      <div className="bg-white p-4 border-b border-gray-200 flex items-center">
+        <img
+          src={`https://via.placeholder.com/40?text=${selectedUser[0]}`}
+          alt={selectedUser}
+          className="w-10 h-10 rounded-full mr-3"
+        />
+        <h2 className="text-lg font-semibold">{selectedUser}</h2>
+        <div className="ml-auto flex space-x-2">
+          <button className="text-gray-500 hover:text-gray-700">📞</button>
+          <button className="text-gray-500 hover:text-gray-700">🎥</button>
+          <button className="text-gray-500 hover:text-gray-700">⋯</button>
         </div>
       </div>
+      <div className="flex-1 p-4 overflow-y-auto">
+        {messages.map((msg, index) => {
+          const msgDate = formatTimestamp(msg.timestamp);
+          const showDate = lastDate !== msgDate;
+          lastDate = msgDate;
 
-      {/* Messages Area */}
-      <div className="flex-1 p-3 sm:p-6 overflow-y-auto bg-gray-100">
-        {messagesWithSeparators.map((item, index) =>
-          item.type === 'separator' ? (
-            <div key={index} className="text-center my-2 sm:my-4">
-              <span className="text-xs text-gray-500 bg-gray-200 px-2 sm:px-3 py-1 rounded-full">
-                {item.label}
-              </span>
-            </div>
-          ) : (
-            <div
-              key={item.index}
-              className={`mb-2 sm:mb-4 flex ${
-                item.msg.user === username ? 'justify-end' : 'justify-start'
-              }`}
-            >
+          return (
+            <React.Fragment key={index}>
+              {showDate && (
+                <div className="text-center my-4">
+                  <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded">{msgDate}</span>
+                </div>
+              )}
               <div
-                className={`max-w-[70%] sm:max-w-xs p-2 sm:p-3 rounded-lg ${
-                  item.msg.user === username
-                    ? 'bg-green-500 text-white'
-                    : 'bg-white text-gray-800 border border-gray-200'
-                }`}
+                className={`flex ${
+                  msg.user === username ? 'justify-end' : 'justify-start'
+                } mb-2`}
               >
-                <p className="text-sm sm:text-base">{item.msg.text}</p>
-                <p className="text-xs mt-1 opacity-75">
-                  {new Date(item.msg.timestamp).toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    hour12: true,
-                  })}
-                </p>
+                {msg.user !== username && (
+                  <img
+                    src={`https://via.placeholder.com/30?text=${msg.user[0]}`}
+                    alt={msg.user}
+                    className="w-8 h-8 rounded-full mr-2 self-end"
+                  />
+                )}
+                <div>
+                  <div
+                    className={`inline-block p-2 rounded-lg ${
+                      msg.user === username
+                        ? 'bg-green-500 text-white'
+                        : 'bg-white text-gray-800'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                  <div
+                    className={`text-xs text-gray-500 mt-1 ${
+                      msg.user === username ? 'text-right' : 'text-left'
+                    }`}
+                  >
+                    {formatMessageTime(msg.timestamp)}
+                  </div>
+                </div>
               </div>
-            </div>
-          )
-        )}
+            </React.Fragment>
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
-
-      {/* Input Area */}
-      <form
-        onSubmit={handleSendMessage}
-        className="p-3 sm:p-4 border-t border-gray-200 flex gap-2 bg-white"
-      >
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage(e)}
-          placeholder="Type your message here"
-          className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base"
-          aria-label="Message input"
-        />
-        <button
-          type="submit"
-          className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
-          aria-label="Send message"
-        >
-          <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-            />
-          </svg>
-        </button>
-      </form>
+      <div className="bg-white p-4 border-t border-gray-200">
+        <form onSubmit={handleSend} className="flex items-center space-x-2">
+          <button type="button" className="text-gray-500 hover:text-gray-700">
+            📎
+          </button>
+          <button type="button" className="text-gray-500 hover:text-gray-700">
+            ➕
+          </button>
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type a message here"
+            className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <button
+            type="submit"
+            className="text-green-500 hover:text-green-700"
+          >
+            ➤
+          </button>
+        </form>
+      </div>
     </div>
   );
-};
+}
 
 export default ChatWindow;
